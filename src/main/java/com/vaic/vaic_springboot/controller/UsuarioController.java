@@ -1,11 +1,11 @@
 package com.vaic.vaic_springboot.controller;
-
 import com.vaic.vaic_springboot.model.Usuario;
 import com.vaic.vaic_springboot.repository.UsuarioRepository;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
-@RequestMapping("/usarios")
+@RequestMapping("/usuarios")
 public class UsuarioController {
 private final UsuarioRepository repository;
 
@@ -31,6 +31,24 @@ private final UsuarioRepository repository;
 
         return repository.save(usuario);
     }
+
+    @GetMapping // define o método GET HTTP
+    public List<Usuario> listar() {
+        return repository.findAll();  // executa “select”
+    }
+
+    @GetMapping("/{id}")  // define o método GET HTTP com parametro
+    public Usuario buscar(@PathVariable Long id) { //  @PathVariable - pega valores da URL (id)
+        return repository.findById(id)    // executa “select where”
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+    }
+
+    @DeleteMapping("/{id}")  // define o método DELETE HTTP com parametro
+    public void deletar(@PathVariable Long id) {
+        repository.deleteById(id);
+    }
+
+
 
 
 
