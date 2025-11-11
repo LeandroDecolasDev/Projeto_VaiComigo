@@ -15,4 +15,6 @@ public class Usuario {
     private String email;
     private String curso;
     private String telefone;
+
+
 }
