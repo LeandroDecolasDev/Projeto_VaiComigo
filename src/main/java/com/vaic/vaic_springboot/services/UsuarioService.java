@@ -25,7 +25,7 @@ public class UsuarioService {
     }
 
     public Usuario cadastrarUsuario(CadastroRequestDTO dto){
-        Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(dto.getEmail());
+        Optional<Usuario> usuarioExistente = Optional.ofNullable(usuarioRepository.findByEmail(dto.getEmail()));
         if (usuarioExistente.isPresent()){
             throw new RuntimeException(("E-mail já cadastrado"));
         }
@@ -67,9 +67,10 @@ public class UsuarioService {
     }
 
     public Usuario login(LoginRequestDTO dto){
-        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail()).
+        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail());
+                        /*.
                 orElseThrow(()->new RuntimeException("E-mail ou senha inválidos"));
-
+*/
         if(!usuario.getSenha().equals(dto.getSenha())){
             throw new RuntimeException("E-mail ou senha inválidos");
         }

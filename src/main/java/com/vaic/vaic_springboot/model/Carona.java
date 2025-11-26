@@ -15,12 +15,19 @@ public class Carona {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long idSolicitante;
     private Long idMotorista;
-    private String origem;
+    private Long numAssento;
+    private int desvioKm;
+    private Double avaliacao;
     private String destino;
     private LocalDateTime horario;
 
+    //private String origem;
+    //private Long idSolicitante;
+
+    /*
     @Enumerated(EnumType.STRING)
     private StatusCarona status;
+
+     */
 }

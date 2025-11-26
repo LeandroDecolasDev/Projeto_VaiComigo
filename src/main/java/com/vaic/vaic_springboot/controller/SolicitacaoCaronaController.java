@@ -1,5 +1,6 @@
 package com.vaic.vaic_springboot.controller;
 
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -7,7 +8,7 @@ import com.vaic.vaic_springboot.model.*;
 import com.vaic.vaic_springboot.dto.SolicitacaoCaronaDTO;
 import com.vaic.vaic_springboot.services.SolicitacaoCaronaService;
 
-@RestController
+@Controller
 @RequestMapping("/solicitacoes")
 public class SolicitacaoCaronaController {
 

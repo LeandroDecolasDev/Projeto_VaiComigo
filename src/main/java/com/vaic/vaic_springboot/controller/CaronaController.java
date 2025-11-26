@@ -7,6 +7,7 @@ import com.vaic.vaic_springboot.model.StatusCarona;
 import com.vaic.vaic_springboot.services.CaronaService;
 import jakarta.persistence.Id;
 import org.springframework.cglib.core.Local;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 // :)
-@RestController
+@Controller
 @RequestMapping("/caronas")
 public class CaronaController {
     private final CaronaService service;
@@ -23,6 +24,31 @@ public class CaronaController {
         this.service = service;
     }
 
+
+    @PostMapping("/criar")
+    public Carona criarCarona(@RequestBody Carona carona){
+        service.criarCarona(carona.getIdMotorista(), carona);
+        return carona;
+    }
+
+    @GetMapping("/minhas-caronas")
+    public List<Carona> listarMinhasCaronas(@RequestParam Long idMotorista) {
+        return service.listarPorMotorista(idMotorista)
+                .stream()
+                .map(carona -> new Carona(
+                        carona.getId(),
+                        carona.getIdMotorista(),
+                        carona.getNumAssento(),
+
+                        carona.getDesvioKm(),
+                        carona.getAvaliacao(),
+                        carona.getDestino(),
+
+                        carona.getHorario()
+                ))
+                .toList();
+    }
+    /*
     @PostMapping("/solicitar")
     public CaronaResponseDTO solicitarCarona(@RequestBody CaronaRequestDTO dto){
 
@@ -36,6 +62,8 @@ public class CaronaController {
         Carona salva = service.solicitarCarona(carona);
         return toResponseDTO(salva);
     }
+*/
+/*
 
     @GetMapping("/pendentes/{idMotorista}")
     public List<CaronaResponseDTO> listarPendentes(@PathVariable Long idMotorista) {
@@ -50,15 +78,21 @@ public class CaronaController {
         Carona atualizada = service.atualizarStatus(idCarona, status);
         return toResponseDTO(atualizada);
     }
+    */
 
+/*
     private CaronaResponseDTO toResponseDTO(Carona carona) {
         return new CaronaResponseDTO(
                 carona.getId(),
-                carona.getOrigem(),
                 carona.getDestino(),
-                carona.getHorario().toString(),
-                carona.getStatus().toString()
+                carona.getAvaliacao(),
+                carona.getNumAssento().toString(),
+                carona.getHorario().toString()
+                //carona.getOrigem(),
+                //carona.getStatus().toString()
         );
     }
+    *
+ */
 
 }
