@@ -1,0 +1,52 @@
+/* Estilização para o body: Garante que o container fique CENTRALIZADO na tela */
+body {
+    background-color: #000;
+    display: flex;
+    justify-content: center; /* Centraliza Horizontalmente */
+    align-items: center; /* Centraliza Verticalmente */
+    min-height: 100vh; /* Ocupa a altura total da viewport */
+    padding: 20px;
+    font-family: sans-serif; /* Tailwind usa font-sans */
+}
+
+/* Estilização para simular a tela do celular */
+.mobile-container {
+    width: 100%;
+    max-width: 400px; /* Largura máxima típica de um celular */
+    height: 800px;    /* Altura para simular a tela */
+    background-color: var(--fundo-app); /* Usando variável do Tailwind config */
+    border-radius: 3rem;
+    /* Sombra para parecer um dispositivo */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 10px #333; 
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Estilo da barra de status no topo (simulando a barra do celular) */
+.status-bar {
+    height: 30px;
+    background-color: #1a1a1a;
+}
+
+/* Animação para o card de carona */
+.ride-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ride-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(30, 64, 175, 0.4);
+}
+
+/* Estilo do modal (overlay) */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+}
+
+/* Classes para simular a cor dos pontos no mapa */
+.ponto-principal-dot { background-color: #1e40af; } /* azul-escuro */
+.ponto-secundario-dot { background-color: #f97316; } /* orange-500 */
