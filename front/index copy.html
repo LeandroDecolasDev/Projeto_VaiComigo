@@ -98,11 +98,40 @@
                     
                     
 
-                    <div
-                        id="map"
-                        class="w-full h-48 rounded-xl border border-gray-700 shadow-inner">
+                    <!-- Mapa Visual -->
+                    <div class="relative w-full h-48 bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-inner" id="mapContainer">
+                        <!-- Ruas Fictícias (Background decorativo) -->
+                        <div class="absolute inset-0 opacity-20 pointer-events-none">
+                            <div class="absolute top-1/2 left-0 w-full h-2 bg-gray-500"></div> <!-- Rua Horizontal -->
+                            <div class="absolute top-0 left-1/3 w-2 h-full bg-gray-500"></div> <!-- Rua Vertical 1 -->
+                            <div class="absolute top-0 right-1/4 w-2 h-full bg-gray-500"></div> <!-- Rua Vertical 2 -->
                         </div>
 
+                        <!-- Raio de Desvio (Círculo Dinâmico) -->
+                        <!-- Inicialmente escondido, controlado via JS -->
+                        <div id="radiusCircle" class="absolute border-2 border-azul-escuro bg-azul-escuro/20 rounded-full transition-all duration-500 ease-out transform -translate-x-1/2 -translate-y-1/2 hidden pointer-events-none z-0"></div>
+
+                        <!-- Pontos (A, B, C, D) -->
+                        <!-- Ponto A (Top Left) -->
+                        <div id="pointA" class="map-point absolute top-[20%] left-[20%] w-4 h-4 bg-gray-400 rounded-full border-2 border-white shadow-lg transition-all duration-300 z-10" title="Campus A">
+                            <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-[10px] text-white whitespace-nowrap bg-black/50 px-1 rounded">Campus A</span>
+                        </div>
+
+                        <!-- Ponto B (Top Right) -->
+                        <div id="pointB" class="map-point absolute top-[15%] right-[15%] w-4 h-4 bg-gray-400 rounded-full border-2 border-white shadow-lg transition-all duration-300 z-10" title="Metrô Central">
+                            <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-[10px] text-white whitespace-nowrap bg-black/50 px-1 rounded">Metrô Central</span>
+                        </div>
+
+                        <!-- Ponto C (Bottom Left) -->
+                        <div id="pointC" class="map-point absolute bottom-[25%] left-[25%] w-4 h-4 bg-gray-400 rounded-full border-2 border-white shadow-lg transition-all duration-300 z-10" title="Shopping">
+                            <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-[10px] text-white whitespace-nowrap bg-black/50 px-1 rounded">Shopping</span>
+                        </div>
+
+                        <!-- Ponto D (Bottom Right) -->
+                        <div id="pointD" class="map-point absolute bottom-[30%] right-[30%] w-4 h-4 bg-gray-400 rounded-full border-2 border-white shadow-lg transition-all duration-300 z-10" title="Parque">
+                            <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 text-[10px] text-white whitespace-nowrap bg-black/50 px-1 rounded">Parque</span>
+                        </div>
+                    </div>
 
                     <!-- Controles -->
                     <div class="space-y-3">
@@ -139,7 +168,7 @@
                         </div>
                     </div>
 
-                    <button id="enviarRota" class="w-full py-3 bg-azul-escuro text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition transform hover:scale-[1.01]">
+                    <button class="w-full py-3 bg-azul-escuro text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition transform hover:scale-[1.01]">
                         Publicar Rota
                     </button>
                 </div>

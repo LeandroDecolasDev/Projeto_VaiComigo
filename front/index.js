@@ -178,4 +178,88 @@ function closeAlert() {
             alertBox.style.display = 'none';
         }, 300);
     }
+
 }
+
+
+let map;
+let marker;
+
+// Inicializa o mapa
+document.addEventListener("DOMContentLoaded", () => {
+  map = L.map("map").setView([-22.90556, -47.06083], 13); // Campinas
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+});
+
+// Captura ENTER no input
+document.getElementById("destinationInput").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    buscarDestino();
+  }
+});
+let destinoAtual, latAtual, lonAtual
+
+async function buscarDestino() {
+  const destino = document.getElementById("destinationInput").value;
+
+  if (!destino) return;
+
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destino)}`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (data.length === 0) {
+    alert("Local não encontrado");
+    return;
+  }
+
+  const lat = data[0].lat;
+  const lon = data[0].lon;
+
+  // Atualiza mapa
+  if (marker) {
+    marker.remove();
+  }
+
+  marker = L.marker([lat, lon]).addTo(map)
+    .bindPopup(destino)
+    .openPopup();
+
+  map.setView([lat, lon], 15);
+  
+  // Enviar para backend
+  destinoAtual= destino
+  latAtual = lat
+  lonAtual = lon
+  //return [destino, lat, lon];
+ 
+}
+
+document.getElementById("enviarRota").addEventListener("click", () => {
+  if (!destinoAtual || !latAtual || !lonAtual) {
+    alert("Escolha um destino antes de publicar a rota");
+    return;
+  }
+
+  enviarDestinoParaBackend(destinoAtual, latAtual, lonAtual);
+});
+
+function enviarDestinoParaBackend(nome, lat, lng) {
+  fetch("http://localhost:8080/api/destino", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      nome,
+      latitude: lat,
+      longitude: lng
+    })
+  });
+}
+
