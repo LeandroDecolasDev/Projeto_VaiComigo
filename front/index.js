@@ -9,6 +9,14 @@ const formMotorista = document.getElementById('formMotorista');
 const tabCarona = document.getElementById('tabCarona');
 const tabMotorista = document.getElementById('tabMotorista');
 
+
+let markerOrigem = null;
+let markerDestino = null;
+
+let destinoAtual;
+
+
+
 // Elemento do relógio
 const timeDisplay = document.getElementById('statusBarTime');
 
@@ -192,23 +200,138 @@ document.addEventListener("DOMContentLoaded", () => {
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap"
   }).addTo(map);
+
+  document.getElementById("destinationInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      buscarDestino(1);
+    }
+  });
+  document.getElementById("startingPositionInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      buscarDestino(0);
+    }
+  });
+  
+  document.getElementById("enviarRota").addEventListener("click", () => {
+    if (!localAtual || !destinoFinal) {
+      alert("Escolha local de partida e  destino antes de publicar a rota");
+      return;
+    }
+  
+    enviarDestinoParaBackend(destinoAtual, latAtual, lonAtual);
+  });
 });
 
 // Captura ENTER no input
-document.getElementById("destinationInput").addEventListener("keypress", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    buscarDestino();
-  }
-});
-let destinoAtual, latAtual, lonAtual
 
-async function buscarDestino() {
-  const destino = document.getElementById("destinationInput").value;
+let localAtual, latAtual, lonAtual
+let destinoFinal, latDestino, lonDestino
+
+async function buscarDestino(type) {
+  const destino =
+    type === 0
+      ? document.getElementById("startingPositionInput").value
+      : document.getElementById("destinationInput").value;
 
   if (!destino) return;
 
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destino)}`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (data.length === 0) {
+    alert("Local não encontrado");
+    return;
+  }
+
+  const lat = parseFloat(data[0].lat);
+  const lon = parseFloat(data[0].lon);
+
+  if (type === 0) {
+    // ORIGEM
+    if (markerOrigem) markerOrigem.remove();
+
+    markerOrigem = L.marker([lat, lon], {
+      title: "Origem",
+      icon: L.icon({
+        iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png",
+        iconSize: [32, 32]
+      })
+    }).addTo(map).bindPopup("Origem: " + destino);
+
+    latAtual = lat;
+    lonAtual = lon;
+    localAtual = destino;
+
+  } else if (type === 1) {
+    // DESTINO
+    if (markerDestino) markerDestino.remove();
+
+    markerDestino = L.marker([lat, lon], {
+      title: "Destino",
+      icon: L.icon({
+        iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png",
+        iconSize: [32, 32]
+      })
+    }).addTo(map).bindPopup("Destino: " + destino);
+
+    latDestino = lat;
+    lonDestino = lon;
+    destinoFinal = destino;
+  }
+
+  // Ajusta o mapa para mostrar ambos
+  if (markerOrigem && markerDestino) {
+    const group = L.featureGroup([markerOrigem, markerDestino]);
+    map.fitBounds(group.getBounds(), { padding: [30, 30] });
+  } else {
+    map.setView([lat, lon], 15);
+  }
+}
+async function calcularRota(latOrigem, lonOrigem, latDestino, lonDestino) {
+  const url = `https://router.project-osrm.org/route/v1/driving/` +
+              `${lonOrigem},${latOrigem};${lonDestino},${latDestino}` +
+              `?overview=full&geometries=geojson`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  return data.routes[0];
+}
+
+let rotaLayer;
+
+async function desenharRota(latO, lonO, latD, lonD) {
+  const rota = await calcularRota(latO, lonO, latD, lonD);
+
+  if (rotaLayer) {
+    rotaLayer.remove();
+  }
+
+  rotaLayer = L.geoJSON(rota.geometry, {
+    style: {
+      color: "blue",
+      weight: 5
+    }
+  }).addTo(map);
+
+  map.fitBounds(rotaLayer.getBounds());
+}
+
+
+
+/*
+async function buscarDestino(type) {
+  let markerOrigem = null;
+  let markerDestino = null;
+
+  const destino = document.getElementById("destinationInput").value;
+
+  if (!local) return;
+
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(local)}`;
 
   const response = await fetch(url);
   const data = await response.json();
@@ -225,32 +348,53 @@ async function buscarDestino() {
   if (marker) {
     marker.remove();
   }
-
-  marker = L.marker([lat, lon]).addTo(map)
-    .bindPopup(destino)
-    .openPopup();
-
-  map.setView([lat, lon], 15);
+  if(type === 0){
+    marker = L.marker([lat, lon], {
+      title: "Origem",
+    icon: L.icon({
+      iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png",
+      iconSize: [32, 32]
+    })
+    }).addTo(map)
+      .bindPopup(local)
+      .openPopup();
   
-  // Enviar para backend
-  destinoAtual= destino
-  latAtual = lat
-  lonAtual = lon
+    map.setView([lat, lon], 15);
+    
+    // Enviar para backend
+    destinoAtual= local;
+    latAtual = lat;
+    lonAtual = lon;
+  }else if(type === 1){
+    marker = L.marker([lat, lon], {
+    title: "Destino",
+    icon: L.icon({
+      iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png",
+      iconSize: [32, 32]
+    })
+    }).addTo(map)
+      .bindPopup(local)
+      .openPopup();
+  
+    map.setView([lat, lon], 15);
+    
+    // Enviar para backend
+    destinoFinal= local;
+    latDestino = lat;
+    lonDestino = lon;
+  }
+
+  
   //return [destino, lat, lon];
  
 }
+  */
 
-document.getElementById("enviarRota").addEventListener("click", () => {
-  if (!destinoAtual || !latAtual || !lonAtual) {
-    alert("Escolha um destino antes de publicar a rota");
-    return;
-  }
 
-  enviarDestinoParaBackend(destinoAtual, latAtual, lonAtual);
-});
+
 
 function enviarDestinoParaBackend(nome, lat, lng) {
-  fetch("http://localhost:8080/api/destino", {
+  /*fetch("http://localhost:8080/api/destino", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -260,6 +404,8 @@ function enviarDestinoParaBackend(nome, lat, lng) {
       latitude: lat,
       longitude: lng
     })
-  });
+  });*/
+
+  desenharRota(latAtual,lonAtual, latDestino, lonDestino);
 }
 
