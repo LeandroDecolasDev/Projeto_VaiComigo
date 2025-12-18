@@ -8,7 +8,7 @@ const formCarona = document.getElementById('formCarona');
 const formMotorista = document.getElementById('formMotorista');
 const tabCarona = document.getElementById('tabCarona');
 const tabMotorista = document.getElementById('tabMotorista');
-
+let latAtual, lonAtual, latDestino, lonDestino; // No topo do arquivo
 
 let markerOrigem = null;
 let markerDestino = null;
@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /**
  * Alterna entre os modos de formulário (Carona/Motorista).
  */
+/*
 function setIntent(intent) {
     if (intent === 'rider') {
         formCarona.classList.remove('hidden');
@@ -68,6 +69,33 @@ function setIntent(intent) {
         tabMotorista.classList.add('bg-azul-escuro', 'text-white');
         tabCarona.classList.remove('bg-azul-escuro', 'text-white');
         tabCarona.classList.add('text-gray-500');
+    }
+}*/
+
+function setIntent(intent) {
+    if (intent === 'rider') {
+        formCarona.classList.remove('hidden');
+        formMotorista.classList.add('hidden');
+        tabCarona.classList.add('bg-azul-escuro', 'text-white');
+        tabMotorista.classList.remove('bg-azul-escuro', 'text-white');
+        tabMotorista.classList.add('text-gray-500');
+    } else {
+        formMotorista.classList.remove('hidden');
+        formCarona.classList.add('hidden');
+        tabMotorista.classList.add('bg-azul-escuro', 'text-white');
+        tabCarona.classList.remove('bg-azul-escuro', 'text-white');
+        tabCarona.classList.add('text-gray-500');
+
+        // ESSENCIAL: Recalcula o tamanho do mapa após ele se tornar visível
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+                // Se já houver rota, centraliza nela ao abrir a aba
+                if (rotaLayer) {
+                    map.fitBounds(rotaLayer.getBounds(), { padding: [40, 40] });
+                }
+            }
+        }, 200);
     }
 }
 
@@ -215,81 +243,86 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   
   document.getElementById("enviarRota").addEventListener("click", () => {
-    if (!localAtual || !destinoFinal) {
-      alert("Escolha local de partida e  destino antes de publicar a rota");
-      return;
-    }
-  
-    enviarDestinoParaBackend(destinoAtual, latAtual, lonAtual);
-  });
-});
-
-// Captura ENTER no input
-
-let localAtual, latAtual, lonAtual
-let destinoFinal, latDestino, lonDestino
-
-async function buscarDestino(type) {
-  const destino =
-    type === 0
-      ? document.getElementById("startingPositionInput").value
-      : document.getElementById("destinationInput").value;
-
-  if (!destino) return;
-
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destino)}`;
-  const response = await fetch(url);
-  const data = await response.json();
-
-  if (data.length === 0) {
-    alert("Local não encontrado");
+  if (!latAtual || !latDestino) {
+    alert("Escolha local de partida e destino antes de publicar a rota");
     return;
   }
 
-  const lat = parseFloat(data[0].lat);
-  const lon = parseFloat(data[0].lon);
+  desenharRota(latAtual, lonAtual, latDestino, lonDestino);
+});
 
-  if (type === 0) {
-    // ORIGEM
-    if (markerOrigem) markerOrigem.remove();
+});
 
-    markerOrigem = L.marker([lat, lon], {
-      title: "Origem",
-      icon: L.icon({
-        iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png",
-        iconSize: [32, 32]
-      })
-    }).addTo(map).bindPopup("Origem: " + destino);
-
-    latAtual = lat;
-    lonAtual = lon;
-    localAtual = destino;
-
-  } else if (type === 1) {
-    // DESTINO
-    if (markerDestino) markerDestino.remove();
-
-    markerDestino = L.marker([lat, lon], {
-      title: "Destino",
-      icon: L.icon({
-        iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png",
-        iconSize: [32, 32]
-      })
-    }).addTo(map).bindPopup("Destino: " + destino);
-
-    latDestino = lat;
-    lonDestino = lon;
-    destinoFinal = destino;
-  }
-
-  // Ajusta o mapa para mostrar ambos
+function atualizarMapa() {
   if (markerOrigem && markerDestino) {
     const group = L.featureGroup([markerOrigem, markerDestino]);
-    map.fitBounds(group.getBounds(), { padding: [30, 30] });
-  } else {
-    map.setView([lat, lon], 15);
+    map.fitBounds(group.getBounds(), { padding: [40, 40] });
+
+    desenharRota(latAtual, lonAtual, latDestino, lonDestino);
   }
 }
+
+
+// Captura ENTER no input
+
+let localAtual
+let destinoFinal
+async function buscarDestino(type) {
+    const input = type === 0
+        ? document.getElementById("startingPositionInput")
+        : document.getElementById("destinationInput");
+
+    if (!input.value) return;
+
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input.value)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!data.length) {
+            alert("Local não encontrado");
+            return;
+        }
+
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+
+        if (type === 0) {
+            if (markerOrigem) markerOrigem.remove();
+            latAtual = lat; // Atribui à variável global
+            lonAtual = lon;
+            markerOrigem = L.marker([lat, lon], {
+                icon: L.icon({
+                    iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png",
+                    iconSize: [32, 32]
+                })
+            }).addTo(map).bindPopup("Origem");
+        } else {
+            if (markerDestino) markerDestino.remove();
+            latDestino = lat; // Atribui à variável global
+            lonDestino = lon;
+            markerDestino = L.marker([lat, lon], {
+                icon: L.icon({
+                    iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png",
+                    iconSize: [32, 32]
+                })
+            }).addTo(map).bindPopup("Destino");
+        }
+
+        // Se ambos existirem, desenha a rota e ajusta o zoom
+        if (latAtual && latDestino) {
+            desenharRota(latAtual, lonAtual, latDestino, lonDestino);
+        } else {
+            // Se só tem um marker, centraliza nele
+            map.setView([lat, lon], 14);
+        }
+    } catch (error) {
+        console.error("Erro na busca:", error);
+    }
+}
+
+
+
 async function calcularRota(latOrigem, lonOrigem, latDestino, lonDestino) {
   const url = `https://router.project-osrm.org/route/v1/driving/` +
               `${lonOrigem},${latOrigem};${lonDestino},${latDestino}` +
@@ -300,25 +333,48 @@ async function calcularRota(latOrigem, lonOrigem, latDestino, lonDestino) {
 
   return data.routes[0];
 }
+function ajustarMapa() {
+  if (markerOrigem && markerDestino) {
+    const group = L.featureGroup([markerOrigem, markerDestino]);
+    map.fitBounds(group.getBounds(), { padding: [40, 40] });
+  }
+}
+
+
+
 
 let rotaLayer;
 
 async function desenharRota(latO, lonO, latD, lonD) {
-  const rota = await calcularRota(latO, lonO, latD, lonD);
+  const url = `https://router.project-osrm.org/route/v1/driving/` +
+              `${lonO},${latO};${lonD},${latD}?overview=full&geometries=geojson`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!data.routes || !data.routes.length) {
+    alert("Não foi possível calcular a rota");
+    return;
+  }
 
   if (rotaLayer) {
     rotaLayer.remove();
   }
 
-  rotaLayer = L.geoJSON(rota.geometry, {
+  rotaLayer = L.geoJSON(data.routes[0].geometry, {
     style: {
-      color: "blue",
+      color: "#2563eb",
       weight: 5
     }
   }).addTo(map);
 
-  map.fitBounds(rotaLayer.getBounds());
+  // 🔥 ISSO É O QUE ESTAVA FALTANDO
+  map.fitBounds(rotaLayer.getBounds(), { padding: [40, 40] });
 }
+
+
+
+
 
 
 
